@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,6 +16,10 @@ namespace ADDMS2
 
         private void LoadUC(UserControl uc)
         {
+            foreach (Control ctrl in panelMain.Controls)
+            {
+                ctrl.Dispose();
+            }
             panelMain.Controls.Clear();
 
             uc.Dock = DockStyle.Fill;

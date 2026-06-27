@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -14,24 +14,63 @@ namespace ADDMS2
     {
         private class DroneInfo
         {
+            public int Id { get; set; } // ID tương ứng trong bảng UAVs (Primary Key)
             public string Ma { get; set; } = "";
             public string Ten { get; set; } = "";
             public double TaiTrong { get; set; }
             public string TrangThai { get; set; } = "";
         }
 
-        private List<DroneInfo> dsDrone = new()
-        {
-            new DroneInfo { Ma = "UAV001", Ten = "DJI Matrice 300", TaiTrong = 20, TrangThai = "san_sang" },
-            new DroneInfo { Ma = "UAV002", Ten = "DJI Mavic 3",     TaiTrong = 10, TrangThai = "dang_bay" },
-            new DroneInfo { Ma = "UAV003", Ten = "Autel EVO II",    TaiTrong = 15, TrangThai = "bao_tri"  },
-            new DroneInfo { Ma = "UAV004", Ten = "Parrot Anafi",    TaiTrong = 8,  TrangThai = "san_sang" },
-        };
+        private List<DroneInfo> dsDrone = new();
 
         public UC_UAV()
         {
             InitializeComponent();
             this.Load += UC_UAV_Load;
+        }
+
+        private void LoadDronesFromDatabase()
+        {
+            try
+            {
+                dsDrone.Clear();
+                string sql = "SELECT UAV_ID, UAV_Name, MaxWeight, Status FROM UAVs";
+                System.Data.DataTable dt = DbHelper.ExecuteQuery(sql);
+                foreach (System.Data.DataRow row in dt.Rows)
+                {
+                    string dbStatus = row["Status"].ToString() ?? "";
+                    string trangThai = "san_sang";
+                    if (dbStatus.Equals("In Mission", StringComparison.OrdinalIgnoreCase))
+                        trangThai = "dang_bay";
+                    else if (dbStatus.Equals("Maintenance", StringComparison.OrdinalIgnoreCase) || dbStatus.Equals("Bảo trì", StringComparison.OrdinalIgnoreCase))
+                        trangThai = "bao_tri";
+                    else if (dbStatus.Equals("Available", StringComparison.OrdinalIgnoreCase))
+                        trangThai = "san_sang";
+                    else
+                        trangThai = dbStatus;
+
+                    dsDrone.Add(new DroneInfo
+                    {
+                        Id = Convert.ToInt32(row["UAV_ID"]),
+                        Ma = "UAV" + row["UAV_ID"].ToString()?.PadLeft(3, '0'),
+                        Ten = row["UAV_Name"].ToString() ?? "",
+                        TaiTrong = Convert.ToDouble(row["MaxWeight"]),
+                        TrangThai = trangThai
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi DB: {ex.Message}");
+                // Dữ liệu dự phòng cục bộ nếu kết nối database lỗi
+                dsDrone = new List<DroneInfo>
+                {
+                    new DroneInfo { Id = -1, Ma = "UAV001", Ten = "DJI Matrice 300 (Local)", TaiTrong = 20, TrangThai = "san_sang" },
+                    new DroneInfo { Id = -2, Ma = "UAV002", Ten = "DJI Mavic 3 (Local)",     TaiTrong = 10, TrangThai = "dang_bay" },
+                    new DroneInfo { Id = -3, Ma = "UAV003", Ten = "Autel EVO II (Local)",    TaiTrong = 15, TrangThai = "bao_tri"  },
+                    new DroneInfo { Id = -4, Ma = "UAV004", Ten = "Parrot Anafi (Local)",    TaiTrong = 8,  TrangThai = "san_sang" },
+                };
+            }
         }
 
         private void UC_UAV_Load(object? sender, EventArgs e)
@@ -44,6 +83,7 @@ namespace ADDMS2
             cboFilter.Items.Add("Đang bảo trì");
             cboFilter.SelectedIndex = 0;
 
+            LoadDronesFromDatabase(); // Tải từ database
             StyleTable();
             RefreshTable(dsDrone);
         }
@@ -243,15 +283,51 @@ namespace ADDMS2
             {
                 if (string.IsNullOrWhiteSpace(txtTen.Text)) { MessageBox.Show("Tên không được để trống!"); return; }
                 if (!double.TryParse(txtTL.Text, out double tl) || tl <= 0) { MessageBox.Show("Tải trọng không hợp lệ!"); return; }
-                dsDrone[idx].Ten = txtTen.Text.Trim();
-                dsDrone[idx].TaiTrong = tl;
-                dsDrone[idx].TrangThai = cboTT.SelectedIndex switch
+                
+                string newTen = txtTen.Text.Trim();
+                string newTrangThai = cboTT.SelectedIndex switch
                 {
                     0 => "san_sang",
                     1 => "dang_bay",
                     2 => "bao_tri",
                     _ => "san_sang"
                 };
+
+                var drone = dsDrone[idx];
+                if (drone.Id >= 0)
+                {
+                    try
+                    {
+                        string dbStatus = cboTT.SelectedIndex switch
+                        {
+                            0 => "Available",
+                            1 => "In Mission",
+                            2 => "Maintenance",
+                            _ => "Available"
+                        };
+                        string updateSql = "UPDATE UAVs SET UAV_Name = @name, MaxWeight = @weight, Status = @status WHERE UAV_ID = @id";
+                        var parameters = new System.Collections.Generic.Dictionary<string, object>
+                        {
+                            { "@name", newTen },
+                            { "@weight", tl },
+                            { "@status", dbStatus },
+                            { "@id", drone.Id }
+                        };
+                        DbHelper.ExecuteNonQuery(updateSql, parameters);
+                        LoadDronesFromDatabase();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi cập nhật CSDL: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else
+                {
+                    dsDrone[idx].Ten = newTen;
+                    dsDrone[idx].TaiTrong = tl;
+                    dsDrone[idx].TrangThai = newTrangThai;
+                }
                 form.DialogResult = DialogResult.OK;
             };
             btnHuy.Click += (s, ev) => form.Close();
@@ -262,10 +338,29 @@ namespace ADDMS2
 
         private void DeleteDrone(int idx)
         {
-            if (MessageBox.Show($"Xóa UAV '{dsDrone[idx].Ten}'?", "Xác nhận xóa",
+            var drone = dsDrone[idx];
+            if (MessageBox.Show($"Xóa UAV '{drone.Ten}'?", "Xác nhận xóa",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                dsDrone.RemoveAt(idx);
+                if (drone.Id >= 0)
+                {
+                    try
+                    {
+                        string deleteSql = "DELETE FROM UAVs WHERE UAV_ID = @id";
+                        var parameters = new System.Collections.Generic.Dictionary<string, object> { { "@id", drone.Id } };
+                        DbHelper.ExecuteNonQuery(deleteSql, parameters);
+                        LoadDronesFromDatabase();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi xóa khỏi CSDL: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else
+                {
+                    dsDrone.RemoveAt(idx);
+                }
                 Filter();
             }
         }
@@ -323,24 +418,60 @@ namespace ADDMS2
 
             btnLuu.Click += (s, ev) =>
             {
-                if (string.IsNullOrWhiteSpace(txtMa.Text)) { MessageBox.Show("Mã không được để trống!"); return; }
-                if (dsDrone.Any(d => d.Ma == txtMa.Text.Trim())) { MessageBox.Show("Mã đã tồn tại!"); return; }
                 if (string.IsNullOrWhiteSpace(txtTen.Text)) { MessageBox.Show("Tên không được để trống!"); return; }
                 if (!double.TryParse(txtTL.Text, out double tl) || tl <= 0) { MessageBox.Show("Tải trọng không hợp lệ!"); return; }
 
-                dsDrone.Add(new DroneInfo
+                string name = txtTen.Text.Trim();
+                string statusStr = cboTT.SelectedIndex switch
                 {
-                    Ma = txtMa.Text.Trim(),
-                    Ten = txtTen.Text.Trim(),
-                    TaiTrong = tl,
-                    TrangThai = cboTT.SelectedIndex switch
+                    0 => "Available",
+                    1 => "In Mission",
+                    2 => "Maintenance",
+                    _ => "Available"
+                };
+
+                // Kiểm tra xem có đang kết nối Database không (dựa trên sự tồn tại của drone hợp lệ)
+                bool isDbConnected = dsDrone.Count > 0 && dsDrone.Exists(d => d.Id >= 0);
+                if (isDbConnected)
+                {
+                    try
                     {
-                        0 => "san_sang",
-                        1 => "dang_bay",
-                        2 => "bao_tri",
-                        _ => "san_sang"
+                        string insertSql = "INSERT INTO UAVs (UAV_Name, MaxWeight, Status) VALUES (@name, @weight, @status)";
+                        var parameters = new System.Collections.Generic.Dictionary<string, object>
+                        {
+                            { "@name", name },
+                            { "@weight", tl },
+                            { "@status", statusStr }
+                        };
+                        DbHelper.ExecuteNonQuery(insertSql, parameters);
+                        LoadDronesFromDatabase();
                     }
-                });
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi thêm mới vào CSDL: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(txtMa.Text)) { MessageBox.Show("Mã không được để trống!"); return; }
+                    if (dsDrone.Any(d => d.Ma == txtMa.Text.Trim())) { MessageBox.Show("Mã đã tồn tại!"); return; }
+
+                    dsDrone.Add(new DroneInfo
+                    {
+                        Id = -Environment.TickCount,
+                        Ma = txtMa.Text.Trim(),
+                        Ten = name,
+                        TaiTrong = tl,
+                        TrangThai = cboTT.SelectedIndex switch
+                        {
+                            0 => "san_sang",
+                            1 => "dang_bay",
+                            2 => "bao_tri",
+                            _ => "san_sang"
+                        }
+                    });
+                }
                 form.DialogResult = DialogResult.OK;
             };
             btnHuy.Click += (s, ev) => form.Close();

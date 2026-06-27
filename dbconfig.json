@@ -1,0 +1,3 @@
+{
+  "ConnectionString": "Server=.;Database=UAV_Management;Trusted_Connection=True;TrustServerCertificate=True"
+}

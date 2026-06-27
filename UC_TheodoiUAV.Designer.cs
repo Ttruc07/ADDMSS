@@ -1,4 +1,4 @@
-﻿namespace ADDMS2
+namespace ADDMS2
 {
     partial class UC_TheodoiUAV
     {
@@ -20,18 +20,28 @@
             base.Dispose(disposing);
         }
 
-        #region Component Designer generated code
+		#region Component Designer generated code
 
-        /// <summary> 
-        /// Required method for Designer support - do not modify 
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InitializeComponent()
-        {
-            components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        }
+		/// <summary> 
+		/// Required method for Designer support - do not modify 
+		/// the contents of this method with the code editor.
+		/// </summary>
+		private void InitializeComponent()
+		{
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_TheodoiUAV));
+			SuspendLayout();
+			// 
+			// UC_TheodoiUAV
+			// 
+			AutoScaleDimensions = new SizeF(13F, 32F);
+			AutoScaleMode = AutoScaleMode.Font;
+			BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
+			BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+			Name = "UC_TheodoiUAV";
+			Size = new Size(811, 529);
+			ResumeLayout(false);
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }
