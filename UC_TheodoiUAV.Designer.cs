@@ -28,15 +28,12 @@ namespace ADDMS2
 		/// </summary>
 		private void InitializeComponent()
 		{
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_TheodoiUAV));
 			SuspendLayout();
 			// 
 			// UC_TheodoiUAV
 			// 
 			AutoScaleDimensions = new SizeF(13F, 32F);
 			AutoScaleMode = AutoScaleMode.Font;
-			BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
-			BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
 			Name = "UC_TheodoiUAV";
 			Size = new Size(811, 529);
 			ResumeLayout(false);
