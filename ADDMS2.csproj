@@ -17,7 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="D:\Training_Framework_Project UAV GCS giao hang Cuu tro\UAV_giaohangcuutro\UAV_giaohangcuutro.csproj" />
+    <ProjectReference Include="UAV_giaohangcuutro\UAV_giaohangcuutro.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="UAV_giaohangcuutro\**" />
+    <EmbeddedResource Remove="UAV_giaohangcuutro\**" />
+    <None Remove="UAV_giaohangcuutro\**" />
   </ItemGroup>
 
   <ItemGroup>

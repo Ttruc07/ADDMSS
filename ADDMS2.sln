@@ -1,11 +1,11 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ADDMS2", "ADDMS2.csproj", "{39C19E83-2473-40D3-9A5F-2741C8973B4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UAV_giaohangcuutro", "d:\Training_Framework_Project UAV GCS giao hang Cuu tro\UAV_giaohangcuutro\UAV_giaohangcuutro.csproj", "{41F678AD-732D-4F81-B1A5-EEA1A926F9BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UAV_giaohangcuutro", "UAV_giaohangcuutro\UAV_giaohangcuutro.csproj", "{41F678AD-732D-4F81-B1A5-EEA1A926F9BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
